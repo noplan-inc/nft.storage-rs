@@ -1,8 +1,8 @@
 # nft.storage-rs
 
-[![Crates.io](https://img.shields.io/crates/v/nft-storage-rs.svg)](https://crates.io/crates/nft-storage-rs)
+[![Crates.io](https://img.shields.io/crates/v/nft.storage-rs.svg)](https://crates.io/crates/nft.storage-rs)
 [![Documentation](https://docs.rs/nft.storage-rs/badge.svg)](https://docs.rs/nft.storage-rs)
-[![Build Status](https://github.com/noplan-inc/nft-storage-rs/actions/workflows/on-plull-request.yml/badge.svg)](https://github.com/noplan-inc/nft-storage-rs/actions)
+[![Build Status](https://github.com/noplan-inc/nft.storage-rs/actions/workflows/on-plull-request.yml/badge.svg)](https://github.com/noplan-inc/nft.storage-rs/actions)
 
 This workspace contains a collection of Rust crates for interacting with the [nft.storage](https://nft.storage/) service. It aims to provide a comprehensive toolkit for managing NFTs (Non-Fungible Tokens) in Rust.
 

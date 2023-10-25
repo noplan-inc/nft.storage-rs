@@ -2,6 +2,7 @@
 members = [
     "nft-storage-rs",
     "nft-storage-rs-cli", 
-    "nft-storage-rs-daemon"
+    "nft-storage-rs-daemon",
+    "nft-storage-rs-api"
 ]
 resolver = "2"

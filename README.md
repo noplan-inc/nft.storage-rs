@@ -10,7 +10,7 @@ This workspace contains a collection of Rust crates for interacting with the [nf
 
 This workspace contains the following members:
 
-- `nft-storage-rs`: The core library for uploading and managing NFT data.
+- `nft-storage-rs-core`: The core library for uploading and managing NFT data.
 - `nft-storage-rs-cli`: A command-line interface for interacting with the `nft-storage-rs` library.
 - `nft-storage-rs-daemon`: A long-running process for automated management of NFT data.
 
@@ -36,7 +36,7 @@ $ cargo install --path .
 
 Each workspace member has its own set of usage guidelines. Please refer to the individual README files for each crate for more information:
 
-- [nft-storage-rs README](nft-storage-rs/README.md)
+- [nft-storage-rs-core README](nft-storage-rs-core/README.md)
 - [nft-storage-rs-cli README](nft-storage-rs-cli/README.md)
 - [nft-storage-rs-daemon README](nft-storage-rs-daemon/README.md)
 

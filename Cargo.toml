@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "nft-storage-rs",
+    "nft-storage-rs-core",
     "nft-storage-rs-cli", 
     "nft-storage-rs-daemon",
     "nft-storage-rs-api"

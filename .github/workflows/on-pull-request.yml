@@ -19,7 +19,11 @@ jobs:
       - name: Run rustfmt
         run: cargo fmt --all -- --check
       - name: Run clippy
-        run: cargo clippy -- -D warnings
+        run: |
+          cargo clippy -- -D warnings --package nft-storage-rs-core
+          cargo clippy -- -D warnings --package nft-storage-rs-cli
+          cargo clippy -- -D warnings --package nft-storage-rs-daemon
+          # Ignore Clippy warnings in nft-storage-rs-api, as this file is auto-generated.
 
   test:
     runs-on: ubuntu-latest

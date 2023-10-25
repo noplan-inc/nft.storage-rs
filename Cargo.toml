@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "nft-storage-rs",
+    "nft-storage-rs-cli", 
+    "nft-storage-rs-daemon"
+]
+resolver = "2"

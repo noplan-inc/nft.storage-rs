@@ -13,8 +13,8 @@ pub struct Deal {
     #[serde(rename = "batchRootCid", skip_serializing_if = "Option::is_none")]
     pub batch_root_cid: Option<String>,
     /// This is a timestamp in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format: YYYY-MM-DDTHH:MM:SSZ.
-    #[serde(rename = "lastChange")]
-    pub last_change: String,
+    #[serde(rename = "lastChanged", skip_serializing_if = "Option::is_none")]
+    pub last_changed: Option<String>,
     /// Miner ID
     #[serde(rename = "miner", skip_serializing_if = "Option::is_none")]
     pub miner: Option<String>,
@@ -42,10 +42,10 @@ pub struct Deal {
 }
 
 impl Deal {
-    pub fn new(last_change: String, status: Status) -> Deal {
+    pub fn new(status: Status) -> Deal {
         Deal {
             batch_root_cid: None,
-            last_change,
+            last_changed: None,
             miner: None,
             network: None,
             piece_cid: None,

@@ -5,7 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **batch_root_cid** | Option<**String**> |  | [optional]
-**last_change** | **String** | This is a timestamp in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format: YYYY-MM-DDTHH:MM:SSZ. | 
+**last_changed** | Option<**String**> | This is a timestamp in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format: YYYY-MM-DDTHH:MM:SSZ. | [optional]
 **miner** | Option<**String**> | Miner ID | [optional]
 **network** | Option<**String**> | Filecoin network for this Deal | [optional]
 **piece_cid** | Option<**String**> | Piece CID string | [optional]

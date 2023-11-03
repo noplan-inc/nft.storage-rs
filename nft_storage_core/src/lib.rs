@@ -1,8 +1,13 @@
 mod error;
+mod ipfs;
 
-use std::{borrow::Borrow, path::Path};
+use std::{
+    borrow::Borrow,
+    path::{Path, PathBuf},
+};
 
 use async_trait::async_trait;
+use futures::stream::{FuturesOrdered, FuturesUnordered, StreamExt};
 mod encryptor;
 use encryptor::Encryptor;
 use error::CoreError;
@@ -49,6 +54,7 @@ pub trait NftStorageApi<E: Encryptor + Send + Sync> {
 
     async fn check(&self, cid: &str) -> Result<CheckResponse>;
     async fn delete(&self, cid: &str) -> Result<DeleteResponse>;
+    async fn download(&self, cid: &str, dest_dir: PathBuf) -> Result<Vec<PathBuf>>;
 
     // DID
     async fn did_get(&self) -> Result<DidGet200Response>;
@@ -131,6 +137,47 @@ where
         Ok(response)
     }
 
+    async fn download(&self, cid: &str, dest_dir: PathBuf) -> Result<Vec<PathBuf>> {
+        if !dest_dir.exists() {
+            tokio::fs::create_dir_all(&dest_dir).await.map_err(|e| {
+                CoreError::ClientError(format!(
+                    "Failed to create directory: {:?}, e: {}",
+                    dest_dir, e
+                ))
+            })?;
+        }
+
+        let response = self.status(cid).await?;
+
+        let files = response
+            .value
+            .ok_or(CoreError::ClientError("Failed to get files".to_string()))?
+            .files
+            .ok_or(CoreError::ClientError("Failed to get files".to_string()))?;
+
+        let mut futures = FuturesUnordered::new();
+        for file in files {
+            let name = file.name.ok_or(CoreError::ClientError(
+                "Failed to get file name".to_string(),
+            ))?;
+
+            let cid_with_file = format!("{}/{}", cid, name);
+            futures.push(ipfs::download_from_gateways(cid_with_file, name));
+        }
+
+        let mut paths: Vec<PathBuf> = Vec::new();
+        while let Some(result) = futures.next().await {
+            let (bytes, name) = result?;
+            let path = dest_dir.join(name);
+            tokio::fs::write(&path, bytes).await.map_err(|e| {
+                CoreError::ClientError(format!("Failed to write file: {:?}, e: {}", path, e))
+            })?;
+
+            paths.push(path);
+        }
+        Ok(paths)
+    }
+
     async fn list(&self, before: Option<String>, limit: Option<i32>) -> Result<ListResponse> {
         let response = api::list(&self.config, before, limit).await?;
         Ok(response)
@@ -186,6 +233,8 @@ mod tests {
         AesEncryptor: Encryptor + Send + Sync,
     {
         dotenv::from_filename(".env.test").ok();
+        // default key is dangerous
+        // test case is ok
         let args = AesArgs::default();
         let encryptor = plugins::aes::AesEncryptor::new(args).unwrap();
         NftStorageCore::try_new(None, encryptor).unwrap()
@@ -569,5 +618,34 @@ mod tests {
             !created.is_empty(),
             "Expected created to be not empty string"
         );
+    }
+
+    #[tokio::test]
+    async fn test_download() {
+        let core = init_core();
+
+        let cid = "bafybeidikdidxlvdblrvqcyamusqjzktsy7wbn7ygl4qaqolkrg2nwqlk4";
+        let dest_dir = PathBuf::from("tests/fixtures/download");
+        let res = core.download(cid, dest_dir).await;
+
+        if let Err(e) = &res {
+            println!("Download operation failed: {:?}", e);
+            return;
+        }
+
+        assert!(res.is_ok(), "Expected download operation to be successful");
+
+        for path in res.unwrap() {
+            assert!(path.exists(), "Expected file to exist");
+            assert!(path.is_file(), "Expected file to be a file");
+            // rust1.png.enc or rust2.png.enc
+            assert_eq!(path.extension().unwrap(), "enc");
+            let stem = path
+                .file_stem()
+                .expect("failed to file_stem()")
+                .to_string_lossy();
+            println!("stem: {}", stem);
+            assert!(stem == "rust1.png" || stem == "rust2.png");
+        }
     }
 }

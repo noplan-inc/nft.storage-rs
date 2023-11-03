@@ -7,7 +7,7 @@ use std::{
 };
 
 use async_trait::async_trait;
-use futures::stream::{FuturesOrdered, FuturesUnordered, StreamExt};
+use futures::stream::{FuturesUnordered, StreamExt};
 mod encryptor;
 use encryptor::Encryptor;
 use error::CoreError;

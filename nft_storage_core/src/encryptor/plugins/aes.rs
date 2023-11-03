@@ -10,6 +10,7 @@ pub struct AesEncryptor {
 }
 
 impl AesEncryptor {
+    #[allow(dead_code)]
     pub fn new(args: AesArgs) -> Result<Self, EncryptionError> {
         let AesArgs { key } = args;
         if key.len() != 32 {
@@ -21,6 +22,7 @@ impl AesEncryptor {
         Ok(Self { key })
     }
 
+    #[allow(dead_code)]
     pub fn generate_key() -> Result<Self, EncryptionError> {
         let mut key = [0u8; 32];
         thread_rng().fill_bytes(&mut key);
@@ -78,6 +80,7 @@ pub struct AesArgs {
 }
 
 impl AesArgs {
+    #[allow(dead_code)]
     pub fn new(key: Vec<u8>) -> Result<Self, EncryptionError> {
         if key.len() != 32 {
             return Err(EncryptionError::InvalidArgument(

@@ -346,24 +346,16 @@ pub async fn store(
     let local_var_req = match local_var_req_builder.build() {
         Ok(req) => req,
         Err(e) => {
-            eprintln!("Error building request: {:?}", e);
             return Err(Error::from(e));
         }
     };
-    eprintln!("Request: {:?}", local_var_req);
     let local_var_resp = local_var_client.execute(local_var_req).await?;
-    eprintln!("Response Status: {:?}", local_var_resp.status());
-    eprintln!("Response Headers: {:?}", local_var_resp.headers());
 
     let local_var_status = local_var_resp.status();
     let local_var_content = local_var_resp.text().await?;
-    eprintln!("Response Body: {:?}", local_var_content);
 
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(|e| {
-            eprintln!("Deserialization error: {:?}", e);
-            Error::from(e)
-        })
+        serde_json::from_str(&local_var_content).map_err(|e| Error::from(e))
     } else {
         let local_var_entity: Option<StoreError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent {
@@ -371,7 +363,6 @@ pub async fn store(
             content: local_var_content,
             entity: local_var_entity,
         };
-        eprintln!("Error Response: {:?}", local_var_error);
         Err(Error::ResponseError(local_var_error))
     }
 }

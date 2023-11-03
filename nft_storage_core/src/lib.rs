@@ -55,7 +55,6 @@ impl NftStorageApi for NftStorageCore {
             .or_else(|| std::env::var("NFT_STORAGE_API_KEY").ok())
             .map_or_else(|| Err(CoreError::ApiKeyMissing), Ok)?;
 
-        eprintln!("API key: {}", api_key);
         eprintln!("API key length: {}", api_key.len());
 
         let config = Configuration {

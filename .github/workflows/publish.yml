@@ -1,0 +1,51 @@
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+name: Conditional Publish
+
+jobs:
+  publish:
+    name: Publish to crates.io if not already published
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - crate: nft_storage_api
+          - crate: nft_storage_core
+          # - crate: nft_storage_cli
+          # - crate: nft_storage_daemon
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - name: Set Toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Read version from Cargo.toml
+        id: read-version
+        run: |
+          VERSION=$(cargo read-manifest --manifest-path ${{ matrix.crate }}/Cargo.toml | jq -r .version)
+          echo "::set-output name=version::$VERSION"
+
+      - name: Check if crate version is published
+        id: check-published
+        run: |
+          if cargo search ${{ matrix.crate }} --limit 1 | grep -q "${{ matrix.crate }} = \"$VERSION\""; then
+            echo "::set-output name=published::yes"
+          else
+            echo "::set-output name=published::no"
+          fi
+        env:
+          VERSION: ${{ steps.read-version.outputs.version }}
+
+      - name: Publish crate if not published
+        if: steps.check-published.outputs.published == 'no'
+        run: |
+          cd ${{ matrix.crate }}
+          cargo publish --token $CRATES_TOKEN
+        env:
+          CRATES_TOKEN: ${{ secrets.CRATES_TOKEN }}

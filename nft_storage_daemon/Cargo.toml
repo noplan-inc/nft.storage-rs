@@ -2,6 +2,11 @@
 name = "nft_storage_daemon"
 version = "0.1.0"
 edition = "2021"
+authors = ["serinuntius"]
+license = "MIT"
+homepage = "https://github.com/noplan-inc/nft.storage-rs"
+repository = "https://github.com/noplan-inc/nft.storage-rs"
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

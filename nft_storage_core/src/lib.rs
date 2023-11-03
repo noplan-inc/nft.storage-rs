@@ -246,4 +246,182 @@ mod tests {
             .expect("Failed to get created");
         assert!(!created.is_empty(), "Expected created to be not empty");
     }
+
+    #[tokio::test]
+    async fn test_list() {
+        let core = init_core();
+
+        let res = core.list(None, None).await;
+
+        if let Err(e) = &res {
+            println!("List operation failed: {:?}", e);
+        }
+
+        assert!(res.is_ok(), "Expected list operation to be successful");
+
+        println!(
+            "List operation response: {:?}",
+            res.as_ref().expect("Failed to get response")
+        );
+
+        let ok = res
+            .as_ref()
+            .expect("Failed to get response")
+            .ok
+            .as_ref()
+            .expect("Failed to get ok");
+        assert_eq!(ok, &true, "Expected ok to be true");
+
+        let items_len = res
+            .as_ref()
+            .expect("Failed to get response")
+            .value
+            .as_ref()
+            .expect("Failed to get value")
+            .len();
+
+        assert!(items_len >= 1, "Expected items length to be greater than 1");
+
+        let created = res
+            .as_ref()
+            .expect("Failed to get response")
+            .value
+            .as_ref()
+            .expect("Failed to get value")
+            .get(0)
+            .expect("Failed to get item")
+            .created
+            .as_ref()
+            .expect("Failed to get created");
+        assert!(!created.is_empty(), "Expected created to be not empty");
+    }
+
+    #[tokio::test]
+    async fn test_status() {
+        let core = init_core();
+
+        let res = core
+            .status("bafybeidzsvkluurobic7m2ms4cvyriqo376zci65s67xrp24g2wolsunz4")
+            .await;
+
+        if let Err(e) = &res {
+            println!("Status operation failed: {:?}", e);
+        }
+
+        assert!(res.is_ok(), "Expected status operation to be successful");
+
+        println!(
+            "Status operation response: {:?}",
+            res.as_ref().expect("Failed to get response")
+        );
+
+        let ok = res
+            .as_ref()
+            .expect("Failed to get response")
+            .ok
+            .expect("Failed to get ok");
+        assert!(ok, "Expected ok to be true");
+        // Status operation response: GetResponse { ok: Some(true), value: Some(Nft { cid: Some("bafybeidzsvkluurobic7m2ms4cvyriqo376zci65s67xrp24g2wolsunz4"), size: Some(3296140.0), created: Some("2023-11-03T00:48:50.766+00:00"), type: Some("directory"), scope: Some("rust-test"), pin: Some(Pin { cid: Some("bafybeidzsvkluurobic7m2ms4cvyriqo376zci65s67xrp24g2wolsunz4"), name: None, meta: None, status: Some(Pinned), created: Some("2023-11-03T00:48:50.766+00:00"), size: Some(3296140.0) }), files: Some([FilesInner { name: Some("rust1.png"), type: Some("") }, FilesInner { name: Some("rust2.png"), type: Some("") }]), deals: Some([]) }) }
+        // assert cid
+        let cid = res
+            .as_ref()
+            .expect("Failed to get response")
+            .value
+            .as_ref()
+            .expect("Failed to get value")
+            .cid
+            .as_ref()
+            .expect("Failed to get cid");
+        assert_eq!(
+            cid, "bafybeidzsvkluurobic7m2ms4cvyriqo376zci65s67xrp24g2wolsunz4",
+            "Expected cid to be bafybeidzsvkluurobic7m2ms4cvyriqo376zci65s67xrp24g2wolsunz4"
+        );
+
+        // size >= 1
+        let size = res
+            .as_ref()
+            .expect("Failed to get response")
+            .value
+            .as_ref()
+            .expect("Failed to get value")
+            .size
+            .as_ref()
+            .expect("Failed to get size");
+        assert!(*size >= 1.0, "Expected size to be greater than 1");
+
+        // check rust1.png, rust2.png
+        let files = res
+            .as_ref()
+            .expect("Failed to get response")
+            .value
+            .as_ref()
+            .expect("Failed to get value")
+            .files
+            .as_ref()
+            .expect("Failed to get files");
+        assert_eq!(files.len(), 2, "Expected files length to be 2");
+        for file in files {
+            let name = file.name.as_ref().expect("Failed to get name");
+            assert!(name == "rust1.png" || name == "rust2.png");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_check() {
+        let core = init_core();
+
+        let res = core
+            .check("bafybeidzsvkluurobic7m2ms4cvyriqo376zci65s67xrp24g2wolsunz4")
+            .await;
+
+        if let Err(e) = &res {
+            println!("Check operation failed: {:?}", e);
+        }
+
+        assert!(res.is_ok(), "Expected check operation to be successful");
+
+        println!(
+            "Check operation response: {:?}",
+            res.as_ref().expect("Failed to get response")
+        );
+
+        let ok = res
+            .as_ref()
+            .expect("Failed to get response")
+            .ok
+            .expect("Failed to get ok");
+        assert!(ok, "Expected ok to be true");
+
+        let cid = res
+            .as_ref()
+            .expect("Failed to get response")
+            .value
+            .as_ref()
+            .expect("Failed to get value")
+            .cid
+            .as_ref()
+            .expect("Failed to get cid");
+
+        assert_eq!(
+            cid, "bafybeidzsvkluurobic7m2ms4cvyriqo376zci65s67xrp24g2wolsunz4",
+            "Expected cid to be bafybeidzsvkluurobic7m2ms4cvyriqo376zci65s67xrp24g2wolsunz4"
+        );
+
+        let created = res
+            .as_ref()
+            .expect("Failed to get response")
+            .value
+            .as_ref()
+            .expect("Failed to get value")
+            .pin
+            .as_ref()
+            .expect("Failed to get pin")
+            .created
+            .as_ref()
+            .expect("Failed to get created");
+        assert!(
+            !created.is_empty(),
+            "Expected created to be not empty string"
+        );
+    }
 }

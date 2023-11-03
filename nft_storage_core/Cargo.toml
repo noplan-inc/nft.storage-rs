@@ -16,3 +16,5 @@ dotenv = "0.15.0"
 aes = "0.8.3"
 cbc = { version = "0.1.2", features = ["std"] }
 rand = "0.8.5"
+reqwest = { version = "0.11.12", features = ["json"] }
+futures = "0.3.29"

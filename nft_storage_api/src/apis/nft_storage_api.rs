@@ -343,7 +343,13 @@ pub async fn store(
     }
     local_var_req_builder = local_var_req_builder.multipart(local_var_form);
 
-    let local_var_req = local_var_req_builder.build()?;
+    let local_var_req = match local_var_req_builder.build() {
+        Ok(req) => req,
+        Err(e) => {
+            eprintln!("Error building request: {:?}", e);
+            return Err(Error::from(e));
+        }
+    };
     eprintln!("Request: {:?}", local_var_req);
     let local_var_resp = local_var_client.execute(local_var_req).await?;
     eprintln!("Response Status: {:?}", local_var_resp.status());

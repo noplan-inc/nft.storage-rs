@@ -37,4 +37,7 @@ jobs:
       - name: Set Toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Run test
-        run: cargo test
+        run: cargo test -- --nocapture
+        env:
+          RUST_BACKTRACE: full
+          NFT_STORAGE_API_KEY: ${{ secrets.NFT_STORAGE_API_KEY }}

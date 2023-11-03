@@ -1,9 +1,6 @@
 mod error;
 
-use std::{
-    borrow::Borrow,
-    path::{Path},
-};
+use std::{borrow::Borrow, path::Path};
 
 use async_trait::async_trait;
 use error::CoreError;
@@ -120,6 +117,8 @@ impl NftStorageApi for NftStorageCore {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use super::*;
 
     fn init_core() -> NftStorageCore {
@@ -190,5 +189,59 @@ mod tests {
             "Upload operation response: {:?}",
             res.as_ref().expect("Failed to get response")
         );
+
+        let ok = res
+            .as_ref()
+            .expect("Failed to get response")
+            .ok
+            .as_ref()
+            .expect("Failed to get ok");
+        assert_eq!(ok, &true, "Expected ok to be true");
+
+        let cid_len = res
+            .as_ref()
+            .expect("Failed to get response")
+            .value
+            .as_ref()
+            .expect("Failed to get value")
+            .cid
+            .as_ref()
+            .expect("Failed to get CID")
+            .len();
+        assert!(cid_len >= 46, "Expected CID length to be greater than 46");
+
+        let files_len = res
+            .as_ref()
+            .expect("Failed to get response")
+            .value
+            .as_ref()
+            .expect("Failed to get value")
+            .files
+            .as_ref()
+            .expect("Failed to get files")
+            .len();
+        assert_eq!(files_len, 2, "Expected files length to be 2");
+
+        let size = res
+            .as_ref()
+            .expect("Failed to get response")
+            .value
+            .as_ref()
+            .expect("Failed to get value")
+            .size
+            .as_ref()
+            .expect("Failed to get size");
+        assert!(size >= &1.0, "Expected size to be greater than 1");
+
+        let created = res
+            .as_ref()
+            .expect("Failed to get response")
+            .value
+            .as_ref()
+            .expect("Failed to get value")
+            .created
+            .as_ref()
+            .expect("Failed to get created");
+        assert!(!created.is_empty(), "Expected created to be not empty");
     }
 }

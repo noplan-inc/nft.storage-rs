@@ -169,11 +169,27 @@ where
         while let Some(result) = futures.next().await {
             let (bytes, name) = result?;
             let path = dest_dir.join(name);
-            tokio::fs::write(&path, bytes).await.map_err(|e| {
-                CoreError::ClientError(format!("Failed to write file: {:?}, e: {}", path, e))
-            })?;
+            let ext = path.extension().unwrap_or_default();
 
-            paths.push(path);
+            let clean_path = if ext == "enc" {
+                let decrypted_data = self.encryptor.decrypt(bytes.as_slice()).map_err(|e| {
+                    CoreError::ClientError(format!("Failed to decrypt file: {}", e))
+                })?;
+                // delete .enc
+                let path = path.with_extension("");
+
+                tokio::fs::write(&path, decrypted_data).await.map_err(|e| {
+                    CoreError::ClientError(format!("Failed to write file: {:?}, e: {}", path, e))
+                })?;
+                path
+            } else {
+                tokio::fs::write(&path, bytes).await.map_err(|e| {
+                    CoreError::ClientError(format!("Failed to write file: {:?}, e: {}", path, e))
+                })?;
+                path
+            };
+
+            paths.push(clean_path);
         }
         Ok(paths)
     }
@@ -639,13 +655,13 @@ mod tests {
             assert!(path.exists(), "Expected file to exist");
             assert!(path.is_file(), "Expected file to be a file");
             // rust1.png.enc or rust2.png.enc
-            assert_eq!(path.extension().unwrap(), "enc");
+            assert_eq!(path.extension().unwrap(), "png");
             let stem = path
                 .file_stem()
                 .expect("failed to file_stem()")
                 .to_string_lossy();
             println!("stem: {}", stem);
-            assert!(stem == "rust1.png" || stem == "rust2.png");
+            assert!(stem == "rust1" || stem == "rust2");
         }
     }
 }

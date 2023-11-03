@@ -6,7 +6,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
+      group: ${{ github.workflow }}-${{ github.ref }}-lint
       cancel-in-progress: true
     steps:
       - name: Checkout Crate
@@ -28,7 +28,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
+      group: ${{ github.workflow }}-${{ github.ref }}-test
       cancel-in-progress: true
     steps:
       - name: Checkout Crate

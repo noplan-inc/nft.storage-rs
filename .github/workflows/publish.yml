@@ -10,6 +10,8 @@ jobs:
   publish:
     name: Publish to crates.io if not already published
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
     strategy:
       matrix:
         include:

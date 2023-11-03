@@ -31,17 +31,15 @@ jobs:
         id: read-version
         run: |
           VERSION=$(cargo read-manifest --manifest-path ${{ matrix.crate }}/Cargo.toml | jq -r .version)
-          echo "version=$VERSION" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_STATE
 
       - name: Check if crate version is published
         id: check-published
         run: |
-          if cargo search ${{ matrix.crate }} --limit 1 | grep -q "${{ matrix.crate }} = \"$VERSION\""; then
+          if cargo search ${{ matrix.crate }} --limit 1 | grep -q "${{ matrix.crate }} = \"${{ steps.read-version.outputs.version }}\""; then
             echo "published=yes" >> $GITHUB_STATE
           else
             echo "published=no" >> $GITHUB_STATE
-        env:
-          VERSION: ${{ env.version }}
 
       - name: Publish crate if not published
         if: ${{ steps.check-published.outputs.published }} == 'no'

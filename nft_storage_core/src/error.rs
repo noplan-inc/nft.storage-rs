@@ -39,6 +39,9 @@ pub enum CoreError {
 
     #[error("API key missing")]
     ApiKeyMissing,
+
+    #[error("IPFS error: {0}")]
+    IpfsError(String),
 }
 
 impl From<Error<CheckError>> for CoreError {

@@ -1,8 +1,8 @@
 [workspace]
 members = [
-    "nft-storage-rs-core",
-    "nft-storage-rs-cli", 
-    "nft-storage-rs-daemon",
-    "nft-storage-rs-api"
+    "nft_storage_core",
+    "nft_storage_cli", 
+    "nft_storage_daemon",
+    "nft_storage_api"
 ]
 resolver = "2"

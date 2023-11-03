@@ -5,6 +5,9 @@ on: pull_request
 jobs:
   lint:
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-lint
+      cancel-in-progress: true
     steps:
       - name: Checkout Crate
         uses: actions/checkout@v4
@@ -20,11 +23,13 @@ jobs:
         run: cargo fmt --all -- --check
       - name: Run clippy
         run: |
-          # Ignore Clippy warnings in nft-storage-rs-api, as this file is auto-generated.
-          cargo clippy --workspace --exclude nft-storage-rs-api -- -D warnings
+          cargo clippy --workspace -- -D warnings
 
   test:
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-test
+      cancel-in-progress: true
     steps:
       - name: Checkout Crate
         uses: actions/checkout@v4
@@ -32,4 +37,7 @@ jobs:
       - name: Set Toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Run test
-        run: cargo test
+        run: cargo test -- --nocapture
+        env:
+          RUST_BACKTRACE: full
+          NFT_STORAGE_API_KEY: ${{ secrets.NFT_STORAGE_API_KEY }}

@@ -2,6 +2,11 @@
 name = "nft_storage_core"
 version = "0.1.0"
 edition = "2021"
+authors = ["serinuntius"]
+description = "A Rust client tailored for NFT.storage, providing an intuitive API wrapper for enhanced interaction with the service. It supports storing ERC-1155 compatible NFTs, encrypted file uploads with pluggable encryption modules, asset management, and decentralized identity (DID) handling. The client also enables encrypted downloads and decryption, ensuring secure data handling. It's designed with async capabilities to integrate smoothly into contemporary Rust async ecosystems."
+license = "MIT"
+homepage = "https://github.com/noplan-inc/nft.storage-rs"
+repository = "https://github.com/noplan-inc/nft.storage-rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

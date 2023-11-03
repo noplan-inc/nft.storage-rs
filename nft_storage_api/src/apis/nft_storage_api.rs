@@ -475,6 +475,52 @@ where
     }
 }
 
+pub async fn upload_multiple_bytes(
+    configuration: &configuration::Configuration,
+    files: Vec<(Vec<u8>, String)>,
+    x_agent_did: Option<&str>,
+) -> Result<crate::models::UploadResponse, Error<UploadError>> {
+    let client = &configuration.client;
+    let uri = format!("{}/upload", &configuration.base_path);
+
+    let mut request_builder = client.post(&uri);
+
+    if let Some(user_agent) = &configuration.user_agent {
+        request_builder = request_builder.header(header::USER_AGENT, user_agent);
+    }
+    if let Some(token) = &configuration.bearer_access_token {
+        request_builder = request_builder.bearer_auth(token);
+    }
+    if let Some(agent_did) = x_agent_did {
+        request_builder = request_builder.header("x-agent-did", agent_did);
+    }
+
+    let mut form = multipart::Form::new();
+    for (data, file_name) in files {
+        form = form.part("file", multipart::Part::bytes(data).file_name(file_name));
+    }
+    let response = request_builder
+        .multipart(form)
+        .send()
+        .await
+        .map_err(crate::apis::Error::Reqwest)?;
+
+    if response.status().is_success() {
+        let response_body = response.text().await.map_err(crate::apis::Error::Reqwest)?;
+        serde_json::from_str(&response_body).map_err(crate::apis::Error::Serde)
+    } else {
+        let status = response.status();
+        let local_var_content = response.text().await.map_err(crate::apis::Error::Reqwest)?;
+        let local_var_entity: Option<UploadError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent {
+            status,
+            content: local_var_content.to_string(),
+            entity: local_var_entity,
+        };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
 pub async fn user_did_post(
     configuration: &configuration::Configuration,
     user_did_post_request: crate::models::UserDidPostRequest,

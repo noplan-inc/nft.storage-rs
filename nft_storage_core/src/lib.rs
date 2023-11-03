@@ -2,7 +2,7 @@ mod error;
 
 use std::{
     borrow::Borrow,
-    path::{Path, PathBuf},
+    path::{Path},
 };
 
 use async_trait::async_trait;

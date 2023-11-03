@@ -10,8 +10,6 @@ jobs:
   publish:
     name: Publish to crates.io if not already published
     runs-on: ubuntu-latest
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
     strategy:
       matrix:
         include:
@@ -19,6 +17,8 @@ jobs:
           - crate: nft_storage_core
           # - crate: nft_storage_cli
           # - crate: nft_storage_daemon
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.crate }}
 
     steps:
       - name: Checkout sources
@@ -31,21 +31,20 @@ jobs:
         id: read-version
         run: |
           VERSION=$(cargo read-manifest --manifest-path ${{ matrix.crate }}/Cargo.toml | jq -r .version)
-          echo "::set-output name=version::$VERSION"
+          echo "version=$VERSION" >> $GITHUB_ENV
 
       - name: Check if crate version is published
         id: check-published
         run: |
           if cargo search ${{ matrix.crate }} --limit 1 | grep -q "${{ matrix.crate }} = \"$VERSION\""; then
-            echo "::set-output name=published::yes"
+            echo "published=yes" >> $GITHUB_STATE
           else
-            echo "::set-output name=published::no"
-          fi
+            echo "published=no" >> $GITHUB_STATE
         env:
-          VERSION: ${{ steps.read-version.outputs.version }}
+          VERSION: ${{ env.version }}
 
       - name: Publish crate if not published
-        if: steps.check-published.outputs.published == 'no'
+        if: ${{ steps.check-published.outputs.published }} == 'no'
         run: |
           cd ${{ matrix.crate }}
           cargo publish --token $CRATES_TOKEN

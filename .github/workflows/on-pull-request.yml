@@ -23,8 +23,7 @@ jobs:
         run: cargo fmt --all -- --check
       - name: Run clippy
         run: |
-          # Ignore Clippy warnings in nft_storage_api, as this file is auto-generated.
-          cargo clippy --workspace --exclude nft_storage_api -- -D warnings
+          cargo clippy --workspace -- -D warnings
 
   test:
     runs-on: ubuntu-latest

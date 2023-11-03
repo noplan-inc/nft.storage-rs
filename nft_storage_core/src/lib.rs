@@ -56,6 +56,7 @@ impl NftStorageApi for NftStorageCore {
             .map_or_else(|| Err(CoreError::ApiKeyMissing), Ok)?;
 
         eprintln!("API key: {}", api_key);
+        eprintln!("API key length: {}", api_key.len());
 
         let config = Configuration {
             bearer_access_token: Some(api_key),

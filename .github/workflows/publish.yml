@@ -31,6 +31,7 @@ jobs:
         id: read-version
         run: |
           VERSION=$(cargo read-manifest --manifest-path ${{ matrix.crate }}/Cargo.toml | jq -r .version)
+          echo "version=$VERSION"
           echo "version=$VERSION" >> $GITHUB_STATE
 
       - name: Check if crate version is published

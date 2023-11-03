@@ -3,6 +3,8 @@ mod error;
 use std::{borrow::Borrow, path::Path};
 
 use async_trait::async_trait;
+mod encryptor;
+use encryptor::Encryptor;
 use error::CoreError;
 use nft_storage_api::{
     apis::configuration::Configuration,
@@ -16,21 +18,30 @@ use nft_storage_api::apis::nft_storage_api as api;
 
 pub type Result<T> = std::result::Result<T, CoreError>;
 
-pub struct NftStorageCore {
+pub struct NftStorageCore<E: Encryptor> {
     config: Configuration,
+    encryptor: E,
 }
 
 #[async_trait]
-pub trait NftStorageApi {
+pub trait NftStorageApi<E: Encryptor + Send + Sync> {
     /// NftStorageApi is a wrapper around the NFT.storage API client to make it more user-friendly. For detailed API specifications, please refer to the following link: refs: [https://nft.storage/api-docs/](https://nft.storage/api-docs/)
 
-    fn try_new(api_key: Option<String>) -> Result<NftStorageCore>;
+    fn try_new(api_key: Option<String>, encryptor: E) -> Result<NftStorageCore<E>>;
 
     /// Store an [ERC-1155](https://eips.ethereum.org/EIPS/eip-1155)-compatible NFT as  a collection of content-addressed objects connected by IPFS CID links.
     async fn store(&self, meta: Option<&str>) -> Result<UploadResponse>;
 
     /// Store a file with nft.storage. You can upload either a single file or multiple files in a directory.
     async fn upload<P>(&self, body: Vec<P>, x_agent_did: Option<&str>) -> Result<UploadResponse>
+    where
+        P: AsRef<Path> + Borrow<Path> + Send + Sync;
+
+    async fn upload_encrypted<P>(
+        &self,
+        body: Vec<P>,
+        x_agent_did: Option<&str>,
+    ) -> Result<UploadResponse>
     where
         P: AsRef<Path> + Borrow<Path> + Send + Sync;
     async fn list(&self, before: Option<String>, limit: Option<i32>) -> Result<ListResponse>;
@@ -49,8 +60,11 @@ pub trait NftStorageApi {
 }
 
 #[async_trait]
-impl NftStorageApi for NftStorageCore {
-    fn try_new(api_key: Option<String>) -> Result<Self> {
+impl<E> NftStorageApi<E> for NftStorageCore<E>
+where
+    E: Encryptor + Send + Sync,
+{
+    fn try_new(api_key: Option<String>, encryptor: E) -> Result<Self> {
         let api_key = api_key
             .or_else(|| std::env::var("NFT_STORAGE_API_KEY").ok())
             .map_or_else(|| Err(CoreError::ApiKeyMissing), Ok)?;
@@ -62,7 +76,7 @@ impl NftStorageApi for NftStorageCore {
             ..Configuration::new()
         };
 
-        Ok(Self { config })
+        Ok(Self { config, encryptor })
     }
 
     async fn store(&self, meta: Option<&str>) -> Result<UploadResponse> {
@@ -75,6 +89,45 @@ impl NftStorageApi for NftStorageCore {
         P: AsRef<Path> + Borrow<Path> + Send + Sync,
     {
         let response = api::upload(&self.config, body, x_agent_did).await?;
+        Ok(response)
+    }
+
+    async fn upload_encrypted<P>(
+        &self,
+        body: Vec<P>,
+        x_agent_did: Option<&str>,
+    ) -> Result<UploadResponse>
+    where
+        P: AsRef<Path> + Borrow<Path> + Send + Sync,
+    {
+        let mut files: Vec<(Vec<u8>, String)> = Vec::new();
+        // forでbodyの中身を一つずつ取り出して暗号化
+        for path in body {
+            // pathの中身をbytesに
+            let data = std::fs::read(path.as_ref())
+                .map_err(|e| CoreError::ClientError(format!("Failed to read file: {}", e)))?;
+            let encrypted_data = self
+                .encryptor
+                .encrypt(data.as_slice())
+                .map_err(|e| CoreError::ClientError(format!("Failed to encrypt file: {}", e)))?;
+
+            // bytesをfilesに追加
+            let mut file_name = path
+                .as_ref()
+                .file_name()
+                .ok_or(CoreError::ClientError(
+                    "Failed to get file name".to_string(),
+                ))?
+                .to_str()
+                .ok_or(CoreError::ClientError(
+                    "Failed to convert file name to string".to_string(),
+                ))?
+                .to_string();
+            file_name.push_str(".enc");
+            files.push((encrypted_data, file_name));
+        }
+
+        let response = api::upload_multiple_bytes(&self.config, files, x_agent_did).await?;
         Ok(response)
     }
 
@@ -121,11 +174,21 @@ impl NftStorageApi for NftStorageCore {
 mod tests {
     use std::path::PathBuf;
 
+    use crate::encryptor::plugins::{
+        self,
+        aes::{AesArgs, AesEncryptor},
+    };
+
     use super::*;
 
-    fn init_core() -> NftStorageCore {
+    fn init_core() -> NftStorageCore<AesEncryptor>
+    where
+        AesEncryptor: Encryptor + Send + Sync,
+    {
         dotenv::from_filename(".env.test").ok();
-        NftStorageCore::try_new(None).unwrap()
+        let args = AesArgs::default();
+        let encryptor = plugins::aes::AesEncryptor::new(args).unwrap();
+        NftStorageCore::try_new(None, encryptor).unwrap()
     }
 
     #[tokio::test]
@@ -210,6 +273,89 @@ mod tests {
             .as_ref()
             .expect("Failed to get CID")
             .len();
+        assert!(cid_len >= 46, "Expected CID length to be greater than 46");
+
+        let files_len = res
+            .as_ref()
+            .expect("Failed to get response")
+            .value
+            .as_ref()
+            .expect("Failed to get value")
+            .files
+            .as_ref()
+            .expect("Failed to get files")
+            .len();
+        assert_eq!(files_len, 2, "Expected files length to be 2");
+
+        let size = res
+            .as_ref()
+            .expect("Failed to get response")
+            .value
+            .as_ref()
+            .expect("Failed to get value")
+            .size
+            .as_ref()
+            .expect("Failed to get size");
+        assert!(size >= &1.0, "Expected size to be greater than 1");
+
+        let created = res
+            .as_ref()
+            .expect("Failed to get response")
+            .value
+            .as_ref()
+            .expect("Failed to get value")
+            .created
+            .as_ref()
+            .expect("Failed to get created");
+        assert!(!created.is_empty(), "Expected created to be not empty");
+    }
+
+    #[tokio::test]
+    async fn test_upload_encrypted() {
+        let core = init_core();
+
+        let body = vec![
+            PathBuf::from("tests/fixtures/rust1.png"),
+            PathBuf::from("tests/fixtures/rust2.png"),
+        ];
+
+        let res = core.upload_encrypted(body, None).await;
+
+        if let Err(e) = &res {
+            println!("Upload operation failed: {:?}", e);
+        }
+
+        assert!(
+            res.is_ok(),
+            "Expected upload encrypted operation to be successful"
+        );
+
+        println!(
+            "Upload operation response: {:?}",
+            res.as_ref().expect("Failed to get response")
+        );
+
+        let ok = res
+            .as_ref()
+            .expect("Failed to get response")
+            .ok
+            .as_ref()
+            .expect("Failed to get ok");
+        assert_eq!(ok, &true, "Expected ok to be true");
+
+        // print cid
+        let cid = res
+            .as_ref()
+            .expect("Failed to get response")
+            .value
+            .as_ref()
+            .expect("Failed to get value")
+            .cid
+            .as_ref()
+            .expect("Failed to get CID");
+        println!("cid: {}", cid);
+
+        let cid_len = cid.len();
         assert!(cid_len >= 46, "Expected CID length to be greater than 46");
 
         let files_len = res

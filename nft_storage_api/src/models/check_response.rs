@@ -24,3 +24,9 @@ impl CheckResponse {
         }
     }
 }
+
+impl Default for CheckResponse {
+    fn default() -> Self {
+        Self::new()
+    }
+}

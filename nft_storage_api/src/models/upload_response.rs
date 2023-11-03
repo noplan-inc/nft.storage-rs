@@ -24,3 +24,9 @@ impl UploadResponse {
         }
     }
 }
+
+impl Default for UploadResponse {
+    fn default() -> Self {
+        Self::new()
+    }
+}

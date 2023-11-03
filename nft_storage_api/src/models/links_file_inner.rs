@@ -24,3 +24,9 @@ impl LinksFileInner {
         }
     }
 }
+
+impl Default for LinksFileInner {
+    fn default() -> Self {
+        Self::new()
+    }
+}

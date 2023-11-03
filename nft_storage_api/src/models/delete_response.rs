@@ -19,3 +19,9 @@ impl DeleteResponse {
         DeleteResponse { ok: None }
     }
 }
+
+impl Default for DeleteResponse {
+    fn default() -> Self {
+        Self::new()
+    }
+}

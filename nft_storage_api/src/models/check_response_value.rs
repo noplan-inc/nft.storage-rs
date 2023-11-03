@@ -28,3 +28,9 @@ impl CheckResponseValue {
         }
     }
 }
+
+impl Default for CheckResponseValue {
+    fn default() -> Self {
+        Self::new()
+    }
+}

@@ -25,3 +25,9 @@ impl UcanTokenPost200Response {
         }
     }
 }
+
+impl Default for UcanTokenPost200Response {
+    fn default() -> Self {
+        Self::new()
+    }
+}

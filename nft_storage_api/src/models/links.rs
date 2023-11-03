@@ -27,3 +27,9 @@ impl Links {
         }
     }
 }
+
+impl Default for Links {
+    fn default() -> Self {
+        Self::new()
+    }
+}

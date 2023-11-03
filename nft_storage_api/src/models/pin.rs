@@ -38,3 +38,9 @@ impl Pin {
         }
     }
 }
+
+impl Default for Pin {
+    fn default() -> Self {
+        Self::new()
+    }
+}

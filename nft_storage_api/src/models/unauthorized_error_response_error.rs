@@ -24,3 +24,9 @@ impl UnauthorizedErrorResponseError {
         }
     }
 }
+
+impl Default for UnauthorizedErrorResponseError {
+    fn default() -> Self {
+        Self::new()
+    }
+}

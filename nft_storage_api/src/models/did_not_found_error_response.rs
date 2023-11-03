@@ -26,6 +26,12 @@ impl DidNotFoundErrorResponse {
     }
 }
 
+impl Default for DidNotFoundErrorResponse {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl fmt::Display for DidNotFoundErrorResponse {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

@@ -26,6 +26,12 @@ impl ForbiddenErrorResponse {
     }
 }
 
+impl Default for ForbiddenErrorResponse {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl fmt::Display for ForbiddenErrorResponse {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

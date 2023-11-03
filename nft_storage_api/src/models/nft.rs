@@ -48,3 +48,9 @@ impl Nft {
         }
     }
 }
+
+impl Default for Nft {
+    fn default() -> Self {
+        Self::new()
+    }
+}

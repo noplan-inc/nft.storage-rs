@@ -25,6 +25,12 @@ impl ForbiddenErrorResponseError {
     }
 }
 
+impl Default for ForbiddenErrorResponseError {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 ///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Message {

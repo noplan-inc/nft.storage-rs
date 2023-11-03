@@ -24,3 +24,9 @@ impl ErrorResponseError {
         }
     }
 }
+
+impl Default for ErrorResponseError {
+    fn default() -> Self {
+        Self::new()
+    }
+}

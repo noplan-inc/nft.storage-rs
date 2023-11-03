@@ -19,3 +19,9 @@ impl UserDidPostRequest {
         UserDidPostRequest { did: None }
     }
 }
+
+impl Default for UserDidPostRequest {
+    fn default() -> Self {
+        Self::new()
+    }
+}

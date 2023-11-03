@@ -24,3 +24,9 @@ impl FilesInner {
         }
     }
 }
+
+impl Default for FilesInner {
+    fn default() -> Self {
+        Self::new()
+    }
+}

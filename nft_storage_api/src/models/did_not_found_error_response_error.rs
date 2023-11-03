@@ -24,3 +24,9 @@ impl DidNotFoundErrorResponseError {
         }
     }
 }
+
+impl Default for DidNotFoundErrorResponseError {
+    fn default() -> Self {
+        Self::new()
+    }
+}

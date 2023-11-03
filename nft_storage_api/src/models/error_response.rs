@@ -27,6 +27,12 @@ impl ErrorResponse {
     }
 }
 
+impl Default for ErrorResponse {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl fmt::Display for ErrorResponse {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

@@ -24,3 +24,9 @@ impl ListResponse {
         }
     }
 }
+
+impl Default for ListResponse {
+    fn default() -> Self {
+        Self::new()
+    }
+}

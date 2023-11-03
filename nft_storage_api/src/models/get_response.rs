@@ -24,3 +24,9 @@ impl GetResponse {
         }
     }
 }
+
+impl Default for GetResponse {
+    fn default() -> Self {
+        Self::new()
+    }
+}

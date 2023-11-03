@@ -25,3 +25,9 @@ impl DidGet200Response {
         }
     }
 }
+
+impl Default for DidGet200Response {
+    fn default() -> Self {
+        Self::new()
+    }
+}

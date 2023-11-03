@@ -107,17 +107,15 @@ where
         P: AsRef<Path> + Borrow<Path> + Send + Sync,
     {
         let mut files: Vec<(Vec<u8>, String)> = Vec::new();
-        // forでbodyの中身を一つずつ取り出して暗号化
         for path in body {
-            // pathの中身をbytesに
-            let data = std::fs::read(path.as_ref())
+            let data = tokio::fs::read(path.as_ref())
+                .await
                 .map_err(|e| CoreError::ClientError(format!("Failed to read file: {}", e)))?;
             let encrypted_data = self
                 .encryptor
                 .encrypt(data.as_slice())
                 .map_err(|e| CoreError::ClientError(format!("Failed to encrypt file: {}", e)))?;
 
-            // bytesをfilesに追加
             let mut file_name = path
                 .as_ref()
                 .file_name()

@@ -37,14 +37,6 @@ jobs:
       - name: Check if crate version is published
         id: check-published
         run: |
-          echo "searching for ${{ matrix.crate }}"
-          cargo search ${{ matrix.crate }} --limit 1
-          echo $?
-          set -x
-          echo "searching for ${{ matrix.crate }} = \"${{ steps.read-version.outputs.version }}\"
-          cargo search ${{ matrix.crate }} --limit 1 | grep -q "${{ matrix.crate }} = \"${{ steps.read-version.outputs.version }}\""
-          echo $?
-
           cargo search ${{ matrix.crate }} --limit 1 | grep -q "${{ matrix.crate }} = \"${{ steps.read-version.outputs.version }}\""
           if [ $? -eq 0 ]; then
             echo "The package ${matrix.crate} with version ${steps.read-version.outputs.version} is found. Setting published=yes."

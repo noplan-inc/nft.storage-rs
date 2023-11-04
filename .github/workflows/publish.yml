@@ -37,7 +37,9 @@ jobs:
       - name: Check if crate version is published
         id: check-published
         run: |
+          set -x
           cargo search ${{ matrix.crate }} --limit 1 | grep -q '${{ matrix.crate }} = "${{ steps.read-version.outputs.version }}"' && echo "published=yes" >> $GITHUB_OUTPUT
+          set +x
 
       - name: Publish crate if not published
         if: ${{ steps.check-published.outputs.published }} != 'yes'

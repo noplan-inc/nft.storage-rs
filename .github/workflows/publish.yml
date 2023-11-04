@@ -41,6 +41,7 @@ jobs:
             echo "published=yes" >> $GITHUB_OUTPUT
           else
             echo "published=no" >> $GITHUB_OUTPUT
+          fi
 
       - name: Publish crate if not published
         if: ${{ steps.check-published.outputs.published }} == 'no'

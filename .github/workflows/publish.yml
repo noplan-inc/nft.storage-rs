@@ -40,9 +40,11 @@ jobs:
           echo "searching for ${{ matrix.crate }}"
           cargo search ${{ matrix.crate }} --limit 1
           echo $?
+          set -x
           echo "searching for ${{ matrix.crate }} = \"${{ steps.read-version.outputs.version }}\"
           cargo search ${{ matrix.crate }} --limit 1 | grep -q "${{ matrix.crate }} = \"${{ steps.read-version.outputs.version }}\""
           echo $?
+          set +x
 
           echo "if ${{ matrix.crate }} = \"${{ steps.read-version.outputs.version }}\"
           if cargo search ${{ matrix.crate }} --limit 1 | grep -q "${{ matrix.crate }} = \"${{ steps.read-version.outputs.version }}\""; then

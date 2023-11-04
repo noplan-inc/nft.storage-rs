@@ -26,26 +26,11 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Set Toolchain
         uses: dtolnay/rust-toolchain@stable
-
-      - name: Read version from Cargo.toml
-        id: read-version
+      - name: Publish crate
         run: |
-          VERSION=$(cargo read-manifest --manifest-path ${{ matrix.crate }}/Cargo.toml | jq -r .version)
-          echo "version=$VERSION"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Check if crate version is published
-        id: check-published
-        run: |
-          set -x
-          cargo search ${{ matrix.crate }} --limit 1 | grep -q '${{ matrix.crate }} = "${{ steps.read-version.outputs.version }}"' && echo "published=yes" >> $GITHUB_OUTPUT
-          set +x
-
-      - name: Publish crate if not published
-        if: ${{ steps.check-published.outputs.published }} != 'yes'
-        run: |
-          echo ${{ steps.read-version.outputs.version }}
+          set +e
           cd ${{ matrix.crate }}
           cargo publish --token $CRATES_TOKEN
+          set -e
         env:
           CRATES_TOKEN: ${{ secrets.CRATES_TOKEN }}

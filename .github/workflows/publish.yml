@@ -38,14 +38,17 @@ jobs:
         id: check-published
         run: |
           set -x
-          if cargo search ${{ matrix.crate }} --limit 1 | grep -q '${{ matrix.crate }} = "${{ steps.read-version.outputs.version }}"'; then
-            echo "The package ${matrix.crate} with version ${steps.read-version.outputs.version} is found. Setting published=yes."
+          set +e
+          cargo search ${{ matrix.crate }} --limit 1 | grep -q '${{ matrix.crate }} = "${{ steps.read-version.outputs.version }}"'
+          if [ $? -eq 0 ]; then
+            echo "The package ${{matrix.crate}} with version ${{steps.read-version.outputs.version}} is found. Setting published=yes."
             echo "published=yes" >> $GITHUB_OUTPUT
           else
-            echo "The package ${matrix.crate} with version ${steps.read-version.outputs.version} is not found. Setting published=no."
+            echo "The package ${{matrix.crate}} with version ${{steps.read-version.outputs.version}} is not found. Setting published=no."
             echo "published=no" >> $GITHUB_OUTPUT
           fi
 
+          set -e
           set +x
 
       - name: Publish crate if not published

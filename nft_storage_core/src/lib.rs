@@ -2,7 +2,6 @@ mod error;
 mod ipfs;
 
 use std::{
-    borrow::Borrow,
     fmt::Display,
     path::{Path, PathBuf},
 };
@@ -47,11 +46,6 @@ pub trait NftStorageApi {
 
     /// Store an [ERC-1155](https://eips.ethereum.org/EIPS/eip-1155)-compatible NFT as  a collection of content-addressed objects connected by IPFS CID links.
     async fn store(&self, meta: Option<&str>) -> Result<UploadResponse>;
-
-    /// Store a file with nft.storage. You can upload either a single file or multiple files in a directory.
-    // async fn upload<P>(&self, body: Vec<P>, x_agent_did: Option<&str>) -> Result<UploadResponse>
-    // where
-    // P: AsRef<Path> + Borrow<Path> + Send + Sync;
 
     async fn upload<'a, P>(
         &self,
@@ -264,10 +258,7 @@ impl NftStorageApi for NftStorageCore {
 mod tests {
     use std::path::PathBuf;
 
-    use crate::encryptor::plugins::{
-        self,
-        aes::{AesArgs, AesEncryptor},
-    };
+    use crate::encryptor::plugins::{self, aes::AesArgs};
 
     use super::*;
 

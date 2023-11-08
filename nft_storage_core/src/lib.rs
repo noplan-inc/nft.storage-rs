@@ -3,12 +3,13 @@ mod ipfs;
 
 use std::{
     borrow::Borrow,
+    fmt::Display,
     path::{Path, PathBuf},
 };
 
 use async_trait::async_trait;
 use futures::stream::{FuturesUnordered, StreamExt};
-mod encryptor;
+pub mod encryptor;
 use encryptor::Encryptor;
 use error::CoreError;
 use nft_storage_api::{
@@ -23,6 +24,7 @@ use nft_storage_api::apis::nft_storage_api as api;
 
 pub type Result<T> = std::result::Result<T, CoreError>;
 
+#[derive(Debug, Display)]
 pub struct NftStorageCore<E: Encryptor> {
     config: Configuration,
     encryptor: E,

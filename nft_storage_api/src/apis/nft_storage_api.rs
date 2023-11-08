@@ -408,13 +408,13 @@ pub async fn ucan_token_post(
 }
 
 /// Store a file with nft.storage. You can upload either a single file or multiple files in a directory. Each request to /upload is restricted to a body size of 100MB, though this does not mean you cannot upload larger files (see \"Size limitations\" below).  ### Single file Send the POST request with `Blob`/`File` data as the request body.  ### Multiple files Send the POST request as `FormData` with the header `Content-Type: multipart/form-data` set. Each part should have a `Content-Disposition` header to specify \"name\" (which must be \"file\") and \"filename\". e.g.  ``` ------WebKitFormBoundary5peilISl2YOOweQy Content-Disposition: form-data; name=\"file\"; filename=\"image.png\" Content-Type: image/png  <data> ------WebKitFormBoundary5peilISl2YOOweQy-- ```  ### Content Addressed Archive (CAR) files You can also upload a CAR file, by setting the request body as a single CAR Blob/File object and providing the request header `Content-Type: application/car` Providing a CAR file allows you to pre-compute the root CID for 1 or more files, ensures that NFT.Storage will store and provide your assets with the same CID.  ### Size limitations Each request to the upload endpoint is limited to a total request body size of 100MB. However, you can upload files larger than 100MB by packing them into a CAR file and splitting the CAR into chunks of less than 100MB. This strategy is used by the JavaScript client library to support uploads of large files.  The simplest method of splitting CAR files is with the [carbites cli tool](https://github.com/nftstorage/carbites):  ``` npm i -g carbites-cli  # Split a big CAR into many smaller CARs carbites split big.car --size 100MB --strategy treewalk ```  Note that you MUST use the `treewalk` strategy, so that all the chunked CARs have the same root CID. Once all the CAR chunks have been uploaded, the CARs will be combined, made available via IPFS, and queued for storage on Filecoin.  For more about working with CARs, see <https://docs.web3.storage/how-tos/work-with-car-files>  ### Rate limits  This API imposes rate limits to ensure quality of service. You may receive a 429 \"Too many requests\" error if you make more than 30 requests with the same API token within a ten second window. Upon receiving a response with a 429 status, clients should retry the failed request after a small delay. To avoid 429 responses, you may wish to implement client-side request throttling to stay within the limits (note: the JS client automatically does this).
-pub async fn upload<P>(
+pub async fn upload<'a, P>(
     configuration: &configuration::Configuration,
-    paths: Vec<P>,
+    paths: &'a [P],
     x_agent_did: Option<&str>,
 ) -> Result<crate::models::UploadResponse, Error<UploadError>>
 where
-    P: AsRef<Path> + Borrow<Path> + Send + Sync,
+    P: AsRef<Path> + Send + Sync + 'a,
 {
     let client = &configuration.client;
     let uri = format!("{}/upload", &configuration.base_path);

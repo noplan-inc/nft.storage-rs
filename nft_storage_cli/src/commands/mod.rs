@@ -1,4 +1,6 @@
 pub mod check;
+pub mod delete;
+pub mod download;
 pub mod list;
 pub mod status;
 pub mod store;

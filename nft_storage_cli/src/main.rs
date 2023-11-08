@@ -1,11 +1,13 @@
 mod commands;
+mod config;
 
 use anyhow::Context as _;
 use clap::{Parser, Subcommand};
 use commands::{
     check::CheckArgs, delete::DeleteArgs, did_get::DidGetArgs, download::DownloadArgs,
-    list::ListArgs, status::StatusArgs, store::StoreArgs, ucan_token_post::UcanTokenPostArgs,
-    upload::UploadArgs, upload_encrypted::UploadEncryptedArgs, user_did_post::UserDidPostArgs,
+    init::InitArgs, list::ListArgs, status::StatusArgs, store::StoreArgs,
+    ucan_token_post::UcanTokenPostArgs, upload::UploadArgs, upload_encrypted::UploadEncryptedArgs,
+    user_did_post::UserDidPostArgs,
 };
 use nft_storage_core::{
     encryptor::{plugins::aes::AesEncryptor, Encryptor},
@@ -40,12 +42,13 @@ struct Cli {
         global = true,
         help = "A method for encrypting a file. Can be specified by developing a plug-in. Default is AES."
     )]
-    pub encryptor: Option<String>,
+    pub encrypt_method: Option<String>,
 }
 
 #[derive(Subcommand, Debug)]
 enum Command {
     // #[clap(subcommand)]
+    Init(InitArgs),
     Status(StatusArgs),
     Upload(UploadArgs),
     Check(CheckArgs),
@@ -61,14 +64,17 @@ enum Command {
 
 pub struct AppContext {
     pub client: Box<NftStorageCore>,
+    pub encryptor: Box<dyn Encryptor + Send + Sync>,
+    pub encrypt_method: String,
     pub verbose: bool,
+    pub api_key: String,
 }
 
-fn choose_encryptor(encryptor: Option<&str>) -> Result<Box<dyn Encryptor + Send + Sync>> {
-    let encryptor = encryptor.unwrap_or("AES");
-    match encryptor {
+fn choose_encryptor(encrypt_method: Option<&str>) -> Result<Box<dyn Encryptor + Send + Sync>> {
+    let method = encrypt_method.unwrap_or("AES");
+    match method {
         "AES" => Ok(Box::<AesEncryptor>::default()),
-        _ => Err(anyhow::anyhow!("Unknown encryptor: {}", encryptor)),
+        _ => Err(anyhow::anyhow!("Unknown encryptor: {}", method)),
     }
 }
 
@@ -76,22 +82,47 @@ fn choose_encryptor(encryptor: Option<&str>) -> Result<Box<dyn Encryptor + Send 
 async fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    let encryptor = choose_encryptor(cli.encryptor.as_deref())
-        .with_context(|| format!("Failed to choose encryptor: {:?}", cli.encryptor.as_deref()))?;
-
-    let api_key = cli.api_key;
-    let verbose = cli.verbose;
-
-    let client = NftStorageCore::try_new(api_key, encryptor).with_context(|| {
+    let encryptor = choose_encryptor(cli.encrypt_method.as_deref()).with_context(|| {
         format!(
-            "Failed to create NftStorageCore with encryptor: {:?}",
-            cli.encryptor
+            "Failed to choose encryptor: {:?}",
+            cli.encrypt_method.as_deref()
         )
     })?;
 
-    let context = AppContext { client, verbose };
+    let api_key = cli.api_key.clone();
+    let verbose = cli.verbose;
+
+    if api_key.is_none() {
+        println!("Please set NFT_STORAGE_API_KEY environment variable.");
+        return Ok(());
+    }
+
+    if cli.encrypt_method.is_none() {
+        println!("Please set ENCRYPT_METHOD environment variable.");
+        return Ok(());
+    }
+
+    let client =
+        NftStorageCore::try_new(api_key.clone(), encryptor.clone_box()).with_context(|| {
+            format!(
+                "Failed to create NftStorageCore with encryptor: {:?}",
+                cli.encrypt_method
+            )
+        })?;
+
+    let context = AppContext {
+        client,
+        verbose,
+        encryptor,
+        encrypt_method: cli.encrypt_method.expect("Failed to get encrypt_method"),
+        api_key: cli.api_key.expect("Failed to get api_key"),
+    };
 
     match cli.command {
+        Command::Init(c) => c
+            .execute(&context)
+            .await
+            .with_context(|| "Failed to execute Init")?,
         Command::Status(c) => c
             .execute(&context)
             .await

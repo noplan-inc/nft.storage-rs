@@ -1,6 +1,8 @@
+use std::fmt::Debug;
+
 pub mod plugins;
 
-pub trait Encryptor: Send + Sync {
+pub trait Encryptor: Send + Sync + Debug {
     fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>, EncryptionError>;
     fn decrypt(&self, data: &[u8]) -> Result<Vec<u8>, EncryptionError>;
     fn generate_key(&self) -> Result<Vec<u8>, EncryptionError>;

@@ -2,6 +2,7 @@ pub mod check;
 pub mod delete;
 pub mod did_get;
 pub mod download;
+pub mod init;
 pub mod list;
 pub mod status;
 pub mod store;

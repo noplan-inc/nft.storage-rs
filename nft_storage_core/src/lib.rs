@@ -61,13 +61,14 @@ pub trait NftStorageApi {
     where
         P: AsRef<Path> + Send + Sync + 'a;
 
-    async fn upload_encrypted<P>(
+    async fn upload_encrypted<'a, P>(
         &self,
-        body: Vec<P>,
+        body: &'a [P],
         x_agent_did: Option<&str>,
     ) -> Result<UploadResponse>
     where
-        P: AsRef<Path> + Borrow<Path> + Send + Sync;
+        P: AsRef<Path> + Send + Sync + 'a;
+
     async fn list(&self, before: Option<&String>, limit: Option<i32>) -> Result<ListResponse>;
     async fn status(&self, cid: &str) -> Result<GetResponse>;
 
@@ -120,13 +121,13 @@ impl NftStorageApi for NftStorageCore {
         Ok(response)
     }
 
-    async fn upload_encrypted<P>(
+    async fn upload_encrypted<'a, P>(
         &self,
-        body: Vec<P>,
+        body: &'a [P],
         x_agent_did: Option<&str>,
     ) -> Result<UploadResponse>
     where
-        P: AsRef<Path> + Borrow<Path> + Send + Sync,
+        P: AsRef<Path> + Send + Sync + 'a,
     {
         let mut files: Vec<(Vec<u8>, String)> = Vec::new();
         for path in body {
@@ -401,7 +402,7 @@ mod tests {
             PathBuf::from("tests/fixtures/rust2.png"),
         ];
 
-        let res = core.upload_encrypted(body, None).await;
+        let res = core.upload_encrypted(&body, None).await;
 
         if let Err(e) = &res {
             println!("Upload operation failed: {:?}", e);

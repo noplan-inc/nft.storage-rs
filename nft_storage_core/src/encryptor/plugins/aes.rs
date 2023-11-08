@@ -5,8 +5,15 @@ use rand::{thread_rng, RngCore as _};
 type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
 type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
 
+#[derive(Debug)]
 pub struct AesEncryptor {
     key: Vec<u8>,
+}
+
+impl Default for AesEncryptor {
+    fn default() -> Self {
+        Self { key: vec![0u8; 32] }
+    }
 }
 
 impl AesEncryptor {

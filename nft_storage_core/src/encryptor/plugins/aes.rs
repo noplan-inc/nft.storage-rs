@@ -5,7 +5,7 @@ use rand::{thread_rng, RngCore as _};
 type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
 type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AesEncryptor {
     key: Vec<u8>,
 }
@@ -79,7 +79,13 @@ impl Encryptor for AesEncryptor {
     }
 
     fn generate_key(&self) -> Result<Vec<u8>, EncryptionError> {
-        todo!()
+        let key = AesEncryptor::generate_key()
+            .map_err(|e| EncryptionError::KeyGenerationFailed(format!("{}", e)))?;
+        Ok(key.key)
+    }
+
+    fn clone_box(&self) -> Box<dyn Encryptor + Send + Sync> {
+        Box::new(self.clone())
     }
 }
 pub struct AesArgs {

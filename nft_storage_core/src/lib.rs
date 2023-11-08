@@ -49,9 +49,17 @@ pub trait NftStorageApi {
     async fn store(&self, meta: Option<&str>) -> Result<UploadResponse>;
 
     /// Store a file with nft.storage. You can upload either a single file or multiple files in a directory.
-    async fn upload<P>(&self, body: Vec<P>, x_agent_did: Option<&str>) -> Result<UploadResponse>
+    // async fn upload<P>(&self, body: Vec<P>, x_agent_did: Option<&str>) -> Result<UploadResponse>
+    // where
+    // P: AsRef<Path> + Borrow<Path> + Send + Sync;
+
+    async fn upload<'a, P>(
+        &self,
+        body: &'a [P],
+        x_agent_did: Option<&str>,
+    ) -> Result<UploadResponse>
     where
-        P: AsRef<Path> + Borrow<Path> + Send + Sync;
+        P: AsRef<Path> + Send + Sync + 'a;
 
     async fn upload_encrypted<P>(
         &self,
@@ -99,11 +107,16 @@ impl NftStorageApi for NftStorageCore {
         Ok(response)
     }
 
-    async fn upload<P>(&self, body: Vec<P>, x_agent_did: Option<&str>) -> Result<UploadResponse>
+    async fn upload<'a, P>(
+        &self,
+        body: &'a [P],
+        x_agent_did: Option<&str>,
+    ) -> Result<UploadResponse>
     where
-        P: AsRef<Path> + Borrow<Path> + Send + Sync,
+        P: AsRef<Path> + Send + Sync + 'a,
     {
-        let response = api::upload(&self.config, body, x_agent_did).await?;
+        let paths: Vec<&Path> = body.iter().map(AsRef::as_ref).collect();
+        let response = api::upload(&self.config, &paths, x_agent_did).await?;
         Ok(response)
     }
 
@@ -311,7 +324,7 @@ mod tests {
             PathBuf::from("tests/fixtures/rust2.png"),
         ];
 
-        let res = core.upload(body, None).await;
+        let res = core.upload(&body, None).await;
 
         if let Err(e) = &res {
             println!("Upload operation failed: {:?}", e);

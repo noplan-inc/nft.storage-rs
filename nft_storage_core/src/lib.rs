@@ -24,17 +24,26 @@ use nft_storage_api::apis::nft_storage_api as api;
 
 pub type Result<T> = std::result::Result<T, CoreError>;
 
-#[derive(Debug, Display)]
-pub struct NftStorageCore<E: Encryptor> {
+#[derive(Debug)]
+pub struct NftStorageCore {
     config: Configuration,
-    encryptor: E,
+    encryptor: Box<dyn Encryptor + Send + Sync>,
+}
+
+impl Display for NftStorageCore {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{{ config: {:?} }}", self.config)
+    }
 }
 
 #[async_trait]
-pub trait NftStorageApi<E: Encryptor + Send + Sync> {
+pub trait NftStorageApi {
     /// NftStorageApi is a wrapper around the NFT.storage API client to make it more user-friendly. For detailed API specifications, please refer to the following link: refs: [https://nft.storage/api-docs/](https://nft.storage/api-docs/)
 
-    fn try_new(api_key: Option<String>, encryptor: E) -> Result<NftStorageCore<E>>;
+    fn try_new(
+        api_key: Option<String>,
+        encryptor: Box<dyn Encryptor + Send + Sync>,
+    ) -> Result<Box<Self>>;
 
     /// Store an [ERC-1155](https://eips.ethereum.org/EIPS/eip-1155)-compatible NFT as  a collection of content-addressed objects connected by IPFS CID links.
     async fn store(&self, meta: Option<&str>) -> Result<UploadResponse>;
@@ -68,11 +77,11 @@ pub trait NftStorageApi<E: Encryptor + Send + Sync> {
 }
 
 #[async_trait]
-impl<E> NftStorageApi<E> for NftStorageCore<E>
-where
-    E: Encryptor + Send + Sync,
-{
-    fn try_new(api_key: Option<String>, encryptor: E) -> Result<Self> {
+impl NftStorageApi for NftStorageCore {
+    fn try_new(
+        api_key: Option<String>,
+        encryptor: Box<dyn Encryptor + Send + Sync>,
+    ) -> Result<Box<Self>> {
         let api_key = api_key
             .or_else(|| std::env::var("NFT_STORAGE_API_KEY").ok())
             .map_or_else(|| Err(CoreError::ApiKeyMissing), Ok)?;
@@ -84,7 +93,7 @@ where
             ..Configuration::new()
         };
 
-        Ok(Self { config, encryptor })
+        Ok(Box::new(Self { config, encryptor }))
     }
 
     async fn store(&self, meta: Option<&str>) -> Result<UploadResponse> {
@@ -244,15 +253,12 @@ mod tests {
 
     use super::*;
 
-    fn init_core() -> NftStorageCore<AesEncryptor>
-    where
-        AesEncryptor: Encryptor + Send + Sync,
-    {
+    fn init_core() -> Box<NftStorageCore> {
         dotenv::from_filename(".env.test").ok();
         // default key is dangerous
         // test case is ok
         let args = AesArgs::default();
-        let encryptor = plugins::aes::AesEncryptor::new(args).unwrap();
+        let encryptor = Box::new(plugins::aes::AesEncryptor::new(args).unwrap());
         NftStorageCore::try_new(None, encryptor).unwrap()
     }
 

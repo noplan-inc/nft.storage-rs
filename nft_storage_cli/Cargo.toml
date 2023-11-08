@@ -12,4 +12,5 @@ repository = "https://github.com/noplan-inc/nft.storage-rs"
 [dependencies]
 tokio = { version = "1.33.0", features = ["full"] }
 anyhow = { version = "1.0.75", features = ["backtrace"] }
-nft_storage_core = { path = "../nft_storage_core" }
+nft_storage_core = { path = "../nft_storage_core", version = "0.1.0" }
+clap = { version = "4.4.7", features = ["env", "derive"] }

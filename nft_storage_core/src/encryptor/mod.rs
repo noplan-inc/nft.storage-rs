@@ -6,6 +6,7 @@ pub trait Encryptor: Send + Sync + Debug {
     fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>, EncryptionError>;
     fn decrypt(&self, data: &[u8]) -> Result<Vec<u8>, EncryptionError>;
     fn generate_key(&self) -> Result<Vec<u8>, EncryptionError>;
+    fn clone_box(&self) -> Box<dyn Encryptor + Send + Sync>;
 }
 
 #[derive(Debug)]
@@ -15,6 +16,7 @@ pub enum EncryptionError {
     InvalidKeyLength(String),
     EncryptionFailed(String),
     DecryptionFailed(String),
+    KeyGenerationFailed(String),
 }
 
 impl std::fmt::Display for EncryptionError {
@@ -25,6 +27,7 @@ impl std::fmt::Display for EncryptionError {
             EncryptionError::InvalidKeyLength(e) => write!(f, "Invalid key length: {}", e),
             EncryptionError::EncryptionFailed(e) => write!(f, "Encryption failed: {}", e),
             EncryptionError::DecryptionFailed(e) => write!(f, "Decryption failed: {}", e),
+            EncryptionError::KeyGenerationFailed(e) => write!(f, "Key generation failed: {}", e),
         }
     }
 }

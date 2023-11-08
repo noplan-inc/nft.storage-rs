@@ -68,7 +68,7 @@ pub trait NftStorageApi {
     ) -> Result<UploadResponse>
     where
         P: AsRef<Path> + Borrow<Path> + Send + Sync;
-    async fn list(&self, before: Option<String>, limit: Option<i32>) -> Result<ListResponse>;
+    async fn list(&self, before: Option<&String>, limit: Option<i32>) -> Result<ListResponse>;
     async fn status(&self, cid: &str) -> Result<GetResponse>;
 
     async fn check(&self, cid: &str) -> Result<CheckResponse>;
@@ -214,7 +214,7 @@ impl NftStorageApi for NftStorageCore {
         Ok(paths)
     }
 
-    async fn list(&self, before: Option<String>, limit: Option<i32>) -> Result<ListResponse> {
+    async fn list(&self, before: Option<&String>, limit: Option<i32>) -> Result<ListResponse> {
         let response = api::list(&self.config, before, limit).await?;
         Ok(response)
     }

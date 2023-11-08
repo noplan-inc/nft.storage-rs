@@ -227,7 +227,7 @@ pub async fn did_get(
 
 pub async fn list(
     configuration: &configuration::Configuration,
-    before: Option<String>,
+    before: Option<&String>,
     limit: Option<i32>,
 ) -> Result<crate::models::ListResponse, Error<ListError>> {
     let local_var_configuration = configuration;
@@ -238,7 +238,7 @@ pub async fn list(
     let mut local_var_req_builder =
         local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
-    if let Some(ref local_var_str) = before {
+    if let Some(local_var_str) = before {
         local_var_req_builder =
             local_var_req_builder.query(&[("before", &local_var_str.to_string())]);
     }

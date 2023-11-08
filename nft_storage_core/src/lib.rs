@@ -74,7 +74,9 @@ pub trait NftStorageApi {
 
     async fn check(&self, cid: &str) -> Result<CheckResponse>;
     async fn delete(&self, cid: &str) -> Result<DeleteResponse>;
-    async fn download(&self, cid: &str, dest_dir: PathBuf) -> Result<Vec<PathBuf>>;
+    async fn download<'a, P>(&self, cid: &str, dest_dir: &'a P) -> Result<Vec<PathBuf>>
+    where
+        P: AsRef<Path> + Send + Sync + 'a;
 
     // DID
     async fn did_get(&self) -> Result<DidGet200Response>;
@@ -158,7 +160,11 @@ impl NftStorageApi for NftStorageCore {
         Ok(response)
     }
 
-    async fn download(&self, cid: &str, dest_dir: PathBuf) -> Result<Vec<PathBuf>> {
+    async fn download<'a, P>(&self, cid: &str, dest_dir: &'a P) -> Result<Vec<PathBuf>>
+    where
+        P: AsRef<Path> + Send + Sync + 'a,
+    {
+        let dest_dir = dest_dir.as_ref();
         if !dest_dir.exists() {
             tokio::fs::create_dir_all(&dest_dir).await.map_err(|e| {
                 CoreError::ClientError(format!(
@@ -660,7 +666,7 @@ mod tests {
 
         let cid = "bafybeidikdidxlvdblrvqcyamusqjzktsy7wbn7ygl4qaqolkrg2nwqlk4";
         let dest_dir = PathBuf::from("tests/fixtures/download");
-        let res = core.download(cid, dest_dir).await;
+        let res = core.download(cid, &dest_dir).await;
 
         if let Err(e) = &res {
             println!("Download operation failed: {:?}", e);

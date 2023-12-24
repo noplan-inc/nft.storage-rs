@@ -115,7 +115,6 @@ async fn main() -> Result<()> {
         }
     }
 
-
     if cli.encrypt_method.is_none() {
         println!("Please set ENCRYPT_METHOD environment variable.");
         return Ok(());

@@ -19,9 +19,10 @@ impl InitArgs {
         };
 
         let config = Config {
-            encrypt_method: context.encrypt_method.clone(),
-            encrypt_private_key: key.clone(),
-            api_key: context.api_key.clone(),
+            encrypt_method: Some(context.encrypt_method.clone()),
+            encrypt_private_key: Some(key.clone()),
+            api_key: Some(context.api_key.clone()),
+            verbose: Some(context.verbose),
         };
 
         let config_path = write_config(&config).await?;

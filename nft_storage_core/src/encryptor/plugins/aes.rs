@@ -7,7 +7,7 @@ type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
 
 #[derive(Debug, Clone)]
 pub struct AesEncryptor {
-    key: Vec<u8>,
+    pub key: Vec<u8>,
 }
 
 impl Default for AesEncryptor {

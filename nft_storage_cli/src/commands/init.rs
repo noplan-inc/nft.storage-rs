@@ -25,7 +25,7 @@ impl InitArgs {
             verbose: Some(context.verbose),
         };
 
-        let config_path = write_config(&config).await?;
+        let config_path = write_config(&config, None).await?;
         println!("Config written to {}", config_path.display());
 
         Ok(())

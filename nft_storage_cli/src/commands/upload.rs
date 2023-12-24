@@ -16,10 +16,12 @@ pub struct UploadArgs {
 
 impl UploadArgs {
     pub async fn execute(&self, context: &AppContext) -> Result<()> {
-        context
+        let resp = context
             .client
             .upload(&self.file, self.x_agent_did.as_deref())
             .await?;
+
+        println!("Uploaded to IPFS: {}", resp.value.unwrap().cid.unwrap());
 
         Ok(())
     }

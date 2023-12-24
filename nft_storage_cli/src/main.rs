@@ -90,10 +90,12 @@ async fn main() -> Result<()> {
     let cli = Cli {
         verbose: cli.verbose || config.verbose.unwrap_or(false),
         api_key: cli.api_key.or(config.api_key),
-        encrypt_method: Some(cli.encrypt_method.unwrap_or(config.encrypt_method.unwrap_or_default())),
+        encrypt_method: Some(
+            cli.encrypt_method
+                .unwrap_or(config.encrypt_method.unwrap_or_default()),
+        ),
         command: cli.command,
     };
-
 
     let encryptor = choose_encryptor(cli.encrypt_method.as_deref()).with_context(|| {
         format!(
@@ -121,7 +123,7 @@ async fn main() -> Result<()> {
                 "Failed to create NftStorageCore with encryptor: {:?}",
                 cli.encrypt_method
             )
-        })?;    
+        })?;
 
     let context = AppContext {
         client,

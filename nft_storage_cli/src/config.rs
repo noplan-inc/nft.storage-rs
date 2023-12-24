@@ -25,7 +25,7 @@ fn get_config_path() -> PathBuf {
 }
 
 pub async fn load_config(target_config_path: Option<PathBuf>) -> Result<Config> {
-    let config_path = target_config_path.unwrap_or_else(|| get_config_path());
+    let config_path = target_config_path.unwrap_or_else(get_config_path);
 
     if !config_path.exists() {
         return Ok(Config::default());
@@ -36,9 +36,8 @@ pub async fn load_config(target_config_path: Option<PathBuf>) -> Result<Config> 
     Ok(config)
 }
 
-
 pub async fn write_config(config: &Config, target_config_path: Option<PathBuf>) -> Result<PathBuf> {
-    let config_path = target_config_path.unwrap_or_else(|| get_config_path());
+    let config_path = target_config_path.unwrap_or_else(get_config_path);
     // not exist dir
     if let Some(parent) = config_path.parent() {
         if !parent.exists() {
@@ -51,13 +50,13 @@ pub async fn write_config(config: &Config, target_config_path: Option<PathBuf>) 
     Ok(config_path)
 }
 
-
+#[cfg(test)]
 mod tests {
     use std::path::PathBuf;
 
-    use nft_storage_core::encryptor::{plugins::aes::AesEncryptor, self, Encryptor};
+    use nft_storage_core::encryptor::plugins::aes::AesEncryptor;
 
-    use crate::config::{load_config, Config, write_config};
+    use crate::config::{load_config, write_config, Config};
 
     #[tokio::test]
     async fn test_write_config() {
@@ -70,7 +69,9 @@ mod tests {
             verbose: Some(true),
         };
 
-        let config_path = write_config(&config, Some(PathBuf::from("test/config.toml"))).await.unwrap();
+        let config_path = write_config(&config, Some(PathBuf::from("test/config.toml")))
+            .await
+            .unwrap();
 
         assert!(config_path.exists());
         // delete config file
@@ -84,7 +85,10 @@ mod tests {
         assert_eq!(config.api_key, Some("api_key".to_string()));
         assert_eq!(config.verbose, Some(true));
         assert_eq!(config.encrypt_method, Some("AES".to_string()));
-        let private_key: Vec<u8> = vec![193, 41, 7, 112, 8, 143, 45, 101, 110, 21, 99, 154, 194, 35, 82, 64, 83, 223, 185, 207, 149, 132, 147, 203, 58, 185, 131, 185, 106, 149, 122, 47];
+        let private_key: Vec<u8> = vec![
+            193, 41, 7, 112, 8, 143, 45, 101, 110, 21, 99, 154, 194, 35, 82, 64, 83, 223, 185, 207,
+            149, 132, 147, 203, 58, 185, 131, 185, 106, 149, 122, 47,
+        ];
         assert_eq!(config.encrypt_private_key, Some(private_key));
     }
 
@@ -99,13 +103,20 @@ mod tests {
             verbose: Some(true),
         };
 
-        let config_path = write_config(&config, Some(PathBuf::from("test/config_test2.toml"))).await.unwrap();
+        let config_path = write_config(&config, Some(PathBuf::from("test/config_test2.toml")))
+            .await
+            .unwrap();
 
-        let loaded_config = load_config(Some(config_path.clone())).await.expect("load config error");
+        let loaded_config = load_config(Some(config_path.clone()))
+            .await
+            .expect("load config error");
         assert_eq!(loaded_config.api_key, config.api_key);
         assert_eq!(loaded_config.verbose, config.verbose);
         assert_eq!(loaded_config.encrypt_method, config.encrypt_method);
-        assert_eq!(loaded_config.encrypt_private_key, config.encrypt_private_key);
+        assert_eq!(
+            loaded_config.encrypt_private_key,
+            config.encrypt_private_key
+        );
 
         // delete config file
         std::fs::remove_file(config_path).expect("failed to delete config file");
@@ -114,7 +125,9 @@ mod tests {
     #[tokio::test]
     async fn test_load_config_with_invalid_config_file() {
         let config_path = Some(PathBuf::from("test/invalid_config.toml"));
-        let config = load_config(config_path).await.expect("failed to load config");
+        let config = load_config(config_path)
+            .await
+            .expect("failed to load config");
         assert_eq!(config, Config::default());
     }
 }

@@ -108,9 +108,13 @@ async fn main() -> Result<()> {
     let verbose = cli.verbose;
 
     if api_key.is_none() {
-        println!("Please set NFT_STORAGE_API_KEY environment variable.");
-        return Ok(());
+        if let Command::Init(_) = cli.command {
+        } else {
+            println!("nft_storage_cli init <API KEY>");
+            return Ok(());
+        }
     }
+
 
     if cli.encrypt_method.is_none() {
         println!("Please set ENCRYPT_METHOD environment variable.");
@@ -134,10 +138,12 @@ async fn main() -> Result<()> {
     };
 
     match cli.command {
-        Command::Init(c) => c
-            .execute(&context)
-            .await
-            .with_context(|| "Failed to execute Init")?,
+        Command::Init(c) => {
+            // I use expect() but It is safe because their parameters are filled.
+            c.execute(&context)
+                .await
+                .with_context(|| "failed to execute Init")?;
+        }
         Command::Status(c) => c
             .execute(&context)
             .await

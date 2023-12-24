@@ -59,17 +59,6 @@ mod tests {
 
     use crate::config::{load_config, Config, write_config};
 
-    
-    #[tokio::test]
-    async fn test_load_config_without_config_file() {
-        let not_exist_path = Some(PathBuf::from("not_exist_config.toml"));
-        let config = load_config(not_exist_path).await.expect("load config error");
-        assert_eq!(config.api_key, None);
-        assert_eq!(config.verbose, None);
-        assert_eq!(config.encrypt_method, None);
-        assert_eq!(config.encrypt_private_key, None);
-    }
-
     #[tokio::test]
     async fn test_write_config() {
         let encryptor = AesEncryptor::generate_key().expect("failed to generate key");

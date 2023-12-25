@@ -15,7 +15,7 @@ jobs:
         include:
           - crate: nft_storage_api
           - crate: nft_storage_core
-          # - crate: nft_storage_cli
+          - crate: nft_storage_cli
           # - crate: nft_storage_daemon
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.crate }}

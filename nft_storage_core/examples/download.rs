@@ -1,9 +1,6 @@
 use std::path::PathBuf;
 
-use nft_storage_core::{
-    encryptor::plugins::aes::AesEncryptor,
-    NftStorageApi, NftStorageCore,
-};
+use nft_storage_core::{encryptor::plugins::aes::AesEncryptor, NftStorageApi, NftStorageCore};
 
 #[tokio::main]
 async fn main() {
@@ -11,7 +8,6 @@ async fn main() {
 
     let encryptor = Box::new(aes);
     let client = NftStorageCore::try_new(None, encryptor).unwrap();
-
 
     // CID only works with what nft.storage manages for now.
     // In the future, any IPFS CID will work.

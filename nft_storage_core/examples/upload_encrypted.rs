@@ -1,9 +1,6 @@
 use std::path::PathBuf;
 
-use nft_storage_core::{
-    encryptor::plugins::aes::AesEncryptor,
-    NftStorageApi, NftStorageCore,
-};
+use nft_storage_core::{encryptor::plugins::aes::AesEncryptor, NftStorageApi, NftStorageCore};
 
 #[tokio::main]
 async fn main() {

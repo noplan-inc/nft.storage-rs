@@ -32,6 +32,7 @@ impl StoreArgs {
         println!("Uploading...");
         let resp = context.client.store(Some(json_str)).await?;
         println!("{}", serde_json::to_string_pretty(&resp)?);
+        println!("Uploaded successfully! Please check to 'nft_storage_cli list'");
 
         Ok(())
     }

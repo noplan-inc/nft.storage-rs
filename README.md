@@ -37,10 +37,10 @@ $ cargo install --path .
 
 Each workspace member has its own set of usage guidelines. Please refer to the individual README files for each crate for more information:
 
-- [nft-storage-rs-core README](nft-storage-rs-core/README.md)
-- [nft-storage-rs-api](nft-storage-rs-api/README.md)
-- [nft-storage-rs-cli README](nft-storage-rs-cli/README.md)
-- [nft-storage-rs-daemon README](nft-storage-rs-daemon/README.md)
+- [nft-storage-core README](nft_storage_core/README.md)
+- [nft-storage-api](nft_storage_api/README.md)
+- [nft-storage-cli README](nft_storage_cli/README.md)
+- [nft-storage-daemon README](nft_storage_daemon/README.md)
 
 ## Contributing
 

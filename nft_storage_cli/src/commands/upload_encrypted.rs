@@ -18,10 +18,13 @@ pub struct UploadEncryptedArgs {
 
 impl UploadEncryptedArgs {
     pub async fn execute(&self, context: &AppContext) -> Result<()> {
-        context
+        let resp = context
             .client
             .upload_encrypted(&self.file, self.x_agent_did.as_deref())
             .await?;
+
+        println!("{}", serde_json::to_string_pretty(&resp)?);
+        println!("Uploaded successfully!");
 
         Ok(())
     }

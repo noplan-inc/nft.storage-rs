@@ -3,6 +3,7 @@ name = "nft_storage_cli"
 version = "0.1.0"
 edition = "2021"
 authors = ["serinuntius"]
+description = "Effortlessly interact with NFT.storage API via CLI, featuring unique AES encryption for file uploads and comprehensive directory upload support."
 license = "MIT"
 homepage = "https://github.com/noplan-inc/nft.storage-rs"
 repository = "https://github.com/noplan-inc/nft.storage-rs"

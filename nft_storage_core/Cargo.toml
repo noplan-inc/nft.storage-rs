@@ -11,7 +11,7 @@ repository = "https://github.com/noplan-inc/nft.storage-rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-nft_storage_api = { path = "../nft_storage_api", version = "1.0.0" }
+nft_storage_api = { path = "../nft_storage_api", version = "1.1.0" }
 tokio = { version = "1.33.0", features = ["full"] }
 thiserror = "1.0.50"
 async-trait = "0.1.74"

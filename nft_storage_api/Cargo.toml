@@ -1,6 +1,6 @@
 [package]
 name = "nft_storage_api"
-version = "1.0.0"
+version = "1.1.0"
 authors = ["OpenAPI Generator team and contributors", "serinuntius"]
 description = "A Rust client for interacting with the NFT.storage service, providing a user-friendly wrapper around its API. It facilitates operations such as storing ERC-1155 compatible NFTs, uploading files, managing digital assets, and handling decentralized identities (DIDs). Built with async support for seamless integration with modern Rust applications."
 # Override this license by providing a License Object in the OpenAPI.

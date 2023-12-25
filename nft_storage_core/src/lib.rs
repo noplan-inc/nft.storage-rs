@@ -2,13 +2,13 @@ mod error;
 mod ipfs;
 
 use std::{
-    borrow::Borrow,
+    fmt::Display,
     path::{Path, PathBuf},
 };
 
 use async_trait::async_trait;
 use futures::stream::{FuturesUnordered, StreamExt};
-mod encryptor;
+pub mod encryptor;
 use encryptor::Encryptor;
 use error::CoreError;
 use nft_storage_api::{
@@ -23,38 +23,54 @@ use nft_storage_api::apis::nft_storage_api as api;
 
 pub type Result<T> = std::result::Result<T, CoreError>;
 
-pub struct NftStorageCore<E: Encryptor> {
+#[derive(Debug)]
+pub struct NftStorageCore {
     config: Configuration,
-    encryptor: E,
+    encryptor: Box<dyn Encryptor + Send + Sync>,
+}
+
+impl Display for NftStorageCore {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{{ config: {:?} }}", self.config)
+    }
 }
 
 #[async_trait]
-pub trait NftStorageApi<E: Encryptor + Send + Sync> {
+pub trait NftStorageApi {
     /// NftStorageApi is a wrapper around the NFT.storage API client to make it more user-friendly. For detailed API specifications, please refer to the following link: refs: [https://nft.storage/api-docs/](https://nft.storage/api-docs/)
 
-    fn try_new(api_key: Option<String>, encryptor: E) -> Result<NftStorageCore<E>>;
+    fn try_new(
+        api_key: Option<String>,
+        encryptor: Box<dyn Encryptor + Send + Sync>,
+    ) -> Result<Box<Self>>;
 
     /// Store an [ERC-1155](https://eips.ethereum.org/EIPS/eip-1155)-compatible NFT as  a collection of content-addressed objects connected by IPFS CID links.
     async fn store(&self, meta: Option<&str>) -> Result<UploadResponse>;
 
-    /// Store a file with nft.storage. You can upload either a single file or multiple files in a directory.
-    async fn upload<P>(&self, body: Vec<P>, x_agent_did: Option<&str>) -> Result<UploadResponse>
-    where
-        P: AsRef<Path> + Borrow<Path> + Send + Sync;
-
-    async fn upload_encrypted<P>(
+    async fn upload<'a, P>(
         &self,
-        body: Vec<P>,
+        body: &'a [P],
         x_agent_did: Option<&str>,
     ) -> Result<UploadResponse>
     where
-        P: AsRef<Path> + Borrow<Path> + Send + Sync;
-    async fn list(&self, before: Option<String>, limit: Option<i32>) -> Result<ListResponse>;
+        P: AsRef<Path> + Send + Sync + 'a;
+
+    async fn upload_encrypted<'a, P>(
+        &self,
+        body: &'a [P],
+        x_agent_did: Option<&str>,
+    ) -> Result<UploadResponse>
+    where
+        P: AsRef<Path> + Send + Sync + 'a;
+
+    async fn list(&self, before: Option<&String>, limit: Option<i32>) -> Result<ListResponse>;
     async fn status(&self, cid: &str) -> Result<GetResponse>;
 
     async fn check(&self, cid: &str) -> Result<CheckResponse>;
     async fn delete(&self, cid: &str) -> Result<DeleteResponse>;
-    async fn download(&self, cid: &str, dest_dir: PathBuf) -> Result<Vec<PathBuf>>;
+    async fn download<'a, P>(&self, cid: &str, dest_dir: &'a P) -> Result<Vec<PathBuf>>
+    where
+        P: AsRef<Path> + Send + Sync + 'a;
 
     // DID
     async fn did_get(&self) -> Result<DidGet200Response>;
@@ -66,23 +82,21 @@ pub trait NftStorageApi<E: Encryptor + Send + Sync> {
 }
 
 #[async_trait]
-impl<E> NftStorageApi<E> for NftStorageCore<E>
-where
-    E: Encryptor + Send + Sync,
-{
-    fn try_new(api_key: Option<String>, encryptor: E) -> Result<Self> {
+impl NftStorageApi for NftStorageCore {
+    fn try_new(
+        api_key: Option<String>,
+        encryptor: Box<dyn Encryptor + Send + Sync>,
+    ) -> Result<Box<Self>> {
         let api_key = api_key
             .or_else(|| std::env::var("NFT_STORAGE_API_KEY").ok())
             .map_or_else(|| Err(CoreError::ApiKeyMissing), Ok)?;
-
-        eprintln!("API key length: {}", api_key.len());
 
         let config = Configuration {
             bearer_access_token: Some(api_key),
             ..Configuration::new()
         };
 
-        Ok(Self { config, encryptor })
+        Ok(Box::new(Self { config, encryptor }))
     }
 
     async fn store(&self, meta: Option<&str>) -> Result<UploadResponse> {
@@ -90,21 +104,26 @@ where
         Ok(response)
     }
 
-    async fn upload<P>(&self, body: Vec<P>, x_agent_did: Option<&str>) -> Result<UploadResponse>
-    where
-        P: AsRef<Path> + Borrow<Path> + Send + Sync,
-    {
-        let response = api::upload(&self.config, body, x_agent_did).await?;
-        Ok(response)
-    }
-
-    async fn upload_encrypted<P>(
+    async fn upload<'a, P>(
         &self,
-        body: Vec<P>,
+        body: &'a [P],
         x_agent_did: Option<&str>,
     ) -> Result<UploadResponse>
     where
-        P: AsRef<Path> + Borrow<Path> + Send + Sync,
+        P: AsRef<Path> + Send + Sync + 'a,
+    {
+        let paths: Vec<&Path> = body.iter().map(AsRef::as_ref).collect();
+        let response = api::upload(&self.config, &paths, x_agent_did).await?;
+        Ok(response)
+    }
+
+    async fn upload_encrypted<'a, P>(
+        &self,
+        body: &'a [P],
+        x_agent_did: Option<&str>,
+    ) -> Result<UploadResponse>
+    where
+        P: AsRef<Path> + Send + Sync + 'a,
     {
         let mut files: Vec<(Vec<u8>, String)> = Vec::new();
         for path in body {
@@ -135,7 +154,11 @@ where
         Ok(response)
     }
 
-    async fn download(&self, cid: &str, dest_dir: PathBuf) -> Result<Vec<PathBuf>> {
+    async fn download<'a, P>(&self, cid: &str, dest_dir: &'a P) -> Result<Vec<PathBuf>>
+    where
+        P: AsRef<Path> + Send + Sync + 'a,
+    {
+        let dest_dir = dest_dir.as_ref();
         if !dest_dir.exists() {
             tokio::fs::create_dir_all(&dest_dir).await.map_err(|e| {
                 CoreError::ClientError(format!(
@@ -192,7 +215,7 @@ where
         Ok(paths)
     }
 
-    async fn list(&self, before: Option<String>, limit: Option<i32>) -> Result<ListResponse> {
+    async fn list(&self, before: Option<&String>, limit: Option<i32>) -> Result<ListResponse> {
         let response = api::list(&self.config, before, limit).await?;
         Ok(response)
     }
@@ -235,22 +258,16 @@ where
 mod tests {
     use std::path::PathBuf;
 
-    use crate::encryptor::plugins::{
-        self,
-        aes::{AesArgs, AesEncryptor},
-    };
+    use crate::encryptor::plugins::{self, aes::AesArgs};
 
     use super::*;
 
-    fn init_core() -> NftStorageCore<AesEncryptor>
-    where
-        AesEncryptor: Encryptor + Send + Sync,
-    {
+    fn init_core() -> Box<NftStorageCore> {
         dotenv::from_filename(".env.test").ok();
         // default key is dangerous
         // test case is ok
         let args = AesArgs::default();
-        let encryptor = plugins::aes::AesEncryptor::new(args).unwrap();
+        let encryptor = Box::new(plugins::aes::AesEncryptor::new(args).unwrap());
         NftStorageCore::try_new(None, encryptor).unwrap()
     }
 
@@ -305,7 +322,7 @@ mod tests {
             PathBuf::from("tests/fixtures/rust2.png"),
         ];
 
-        let res = core.upload(body, None).await;
+        let res = core.upload(&body, None).await;
 
         if let Err(e) = &res {
             println!("Upload operation failed: {:?}", e);
@@ -382,7 +399,7 @@ mod tests {
             PathBuf::from("tests/fixtures/rust2.png"),
         ];
 
-        let res = core.upload_encrypted(body, None).await;
+        let res = core.upload_encrypted(&body, None).await;
 
         if let Err(e) = &res {
             println!("Upload operation failed: {:?}", e);
@@ -640,7 +657,7 @@ mod tests {
 
         let cid = "bafybeidikdidxlvdblrvqcyamusqjzktsy7wbn7ygl4qaqolkrg2nwqlk4";
         let dest_dir = PathBuf::from("tests/fixtures/download");
-        let res = core.download(cid, dest_dir).await;
+        let res = core.download(cid, &dest_dir).await;
 
         if let Err(e) = &res {
             println!("Download operation failed: {:?}", e);

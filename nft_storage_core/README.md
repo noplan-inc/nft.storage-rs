@@ -30,16 +30,23 @@ $ cargo build
 Here's a quick example:
 
 ```rust
-use nft_storage_rs::{NFTStorage, Config};
+use std::path::PathBuf;
 
-let config = Config::new("your-nft.storage-api-key-here");
-let client = NFTStorage::new(config);
+use nft_storage_core::{encryptor::plugins::aes::AesEncryptor, NftStorageApi, NftStorageCore};
 
-// Upload NFT data
-let cid = client.upload("path/to/your/file").unwrap();
+#[tokio::main]
+async fn main() {
+    let aes = AesEncryptor::generate_key().unwrap();
 
-// Retrieve NFT data
-let data = client.retrieve(&cid).unwrap();
+    let encryptor = Box::new(aes);
+    // If pass none, use NFT_STORAGE_API_KEY envrioment variable.
+    let api_key = Some("<FILL ME NFT_STORAGE_API_KEY>".to_string());
+    let client = NftStorageCore::try_new(api_key, encryptor).unwrap();
+    
+    let path = vec![PathBuf::from("test.txt")];
+    let resp = client.upload(&path, None).await.unwrap();
+    println!("{}", serde_json::to_string_pretty(&resp).unwrap());
+}
 ```
 
 For more examples, please refer to the `examples/` directory.
